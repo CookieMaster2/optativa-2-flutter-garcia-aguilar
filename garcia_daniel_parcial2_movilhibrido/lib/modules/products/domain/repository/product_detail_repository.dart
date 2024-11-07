@@ -1,19 +1,20 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import '../../../../infrastructure/app/repository.dart';
+import 'package:garcia_daniel_parcial2_movilhibrido/infrastructure/app/repository.dart';
+import '../../../../infrastructure/connection/connection.dart';
 import '../dto/products_by_id.dart';
 
 class ProductDetailRepository implements Repository<ProductDetailDTO, int> {
   final String baseUrl = "https://dummyjson.com/products/";
+  final Connection _connection;
+
+  ProductDetailRepository(this._connection);
 
   @override
   Future<ProductDetailDTO> execute(int productId) async {
-    final response = await http.get(Uri.parse('$baseUrl$productId'));
-
-    if (response.statusCode == 200) {
-      return ProductDetailDTO.fromJson(json.decode(response.body));
-    } else {
-      throw Exception('No se pudo cargar el producto $productId');
+    try {
+      final jsonMap = await _connection.get<Map<String, dynamic>>('$baseUrl$productId');
+      return ProductDetailDTO.fromJson(jsonMap);
+    } catch (e) {
+      throw Exception('No se pudo cargar el producto $productId: $e');
     }
   }
 }

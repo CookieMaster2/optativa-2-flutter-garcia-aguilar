@@ -16,10 +16,10 @@ class ProductSummaryDTO {
   factory ProductSummaryDTO.fromJson(Map<String, dynamic> json) {
     return ProductSummaryDTO(
       id: json['id'],
-      title: json['title'],
-      price: json['price'].toDouble(),
-      category: json['category'],
-      imageUrl: json['imageUrl'],
+      title: json['title'] ?? 'No title', 
+      price: (json['price'] as num?)?.toDouble() ?? 0.0, 
+      category: json['category'] ?? 'Unknown', 
+      imageUrl: json['thumbnail'] ?? '',
     );
   }
 }

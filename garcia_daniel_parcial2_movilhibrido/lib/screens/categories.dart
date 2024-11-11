@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../modules/products/domain/dto/products_category.dart';
 import '../modules/products/useCase/categories_usecase.dart';
-import 'screen_products_category.dart'; 
+import 'cart.dart';
+import 'screen_products_category.dart';
 
 class Categories extends StatelessWidget {
   final GetCategoriesUseCase getCategoriesUseCase;
@@ -13,6 +14,19 @@ class Categories extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Categorias"),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.shopping_cart),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const Cart(),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: FutureBuilder<List<CategoryDTO>>(
         future: getCategoriesUseCase.execute(null),
@@ -60,10 +74,11 @@ class CategoryListItem extends StatelessWidget {
                 );
               },
               errorBuilder: (context, error, stackTrace) {
-                return const Icon(Icons.broken_image, color: Colors.red, size: 40);
+                return const Icon(Icons.broken_image,
+                    color: Colors.red, size: 40);
               },
             )
-          : const Icon(Icons.category, color: Colors.blue, size: 40), 
+          : const Icon(Icons.category, color: Colors.blue, size: 40),
       title: Text(
         category.name,
         style: const TextStyle(fontWeight: FontWeight.bold),
@@ -81,4 +96,3 @@ class CategoryListItem extends StatelessWidget {
     );
   }
 }
-

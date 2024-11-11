@@ -1,23 +1,51 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../infrastructure/connection/connection.dart';
 import '../modules/products/domain/dto/products_by_id.dart';
 import '../modules/products/domain/repository/product_detail_repository.dart';
 import '../modules/products/useCase/products_details_usecase.dart';
 
-class Details extends StatelessWidget {
+class Details extends StatefulWidget {
   final int productId;
 
-  const Details({required this.productId, Key? key})
-      : super(key: key);
+  const Details({required this.productId, Key? key}) : super(key: key);
+
+  @override
+  State<Details> createState() => _DetailsState();
+}
+
+class _DetailsState extends State<Details> {
+  int _quantity = 1;
+
+  Future<void> _addToCart(ProductDetailDTO product) async {
+    final prefs = await SharedPreferences.getInstance();
+    final cartItems = prefs.getStringList('cart_items') ?? [];
+
+    final cartItem = {
+      "title": product.title,
+      "price": product.price,
+      "quantity": _quantity,
+      "id": product.id,
+    };
+
+    final cartItemJson = jsonEncode(cartItem);
+
+    cartItems.add(cartItemJson);
+
+    await prefs.setStringList('cart_items', cartItems);
+
+    setState(() {
+      _quantity = 1;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    
     final repository = ProductDetailRepository(Connection());
     final getProductDetailUseCase = GetProductDetailUseCase(repository);
 
-
-    final productFuture = getProductDetailUseCase.execute(productId);
+    final productFuture = getProductDetailUseCase.execute(widget.productId);
 
     return Scaffold(
       appBar: AppBar(
@@ -54,7 +82,6 @@ class Details extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-
                   Text(
                     product.title,
                     style: const TextStyle(
@@ -62,14 +89,12 @@ class Details extends StatelessWidget {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
-
                   Text(
                     product.description,
                     style: const TextStyle(fontSize: 16),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
-
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
@@ -84,9 +109,40 @@ class Details extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 16),
-
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.remove),
+                        onPressed: _quantity > 1
+                            ? () {
+                                setState(() {
+                                  _quantity--;
+                                });
+                              }
+                            : null,
+                      ),
+                      Text(
+                        '$_quantity',
+                        style: const TextStyle(fontSize: 18),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.add),
+                        onPressed: _quantity < product.stock
+                            ? () {
+                                setState(() {
+                                  _quantity++;
+                                });
+                              }
+                            : null,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
                   ElevatedButton.icon(
-                    onPressed: null, 
+                    onPressed: _quantity > 0 && _quantity <= product.stock
+                        ? () => _addToCart(product)
+                        : null,
                     icon: const Icon(Icons.add),
                     label: const Text("Agregar"),
                     style: ElevatedButton.styleFrom(

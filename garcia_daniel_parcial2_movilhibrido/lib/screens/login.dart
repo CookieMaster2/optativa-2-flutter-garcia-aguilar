@@ -2,16 +2,20 @@ import 'package:flutter/material.dart';
 import '../modules/login/domain/dto/user_credentials.dart';
 import '../modules/login/useCase/login_usecase.dart';
 import '../modules/products/useCase/categories_usecase.dart';
+import '../modules/search/useCase/search_usecase.dart';
 import 'categories.dart';
 
 class Login extends StatefulWidget {
   final LoginUseCase loginUseCase;
   final GetCategoriesUseCase getCategoriesUseCase;
+  final SearchProductsUseCase searchProductsUseCase; 
 
-  const Login(
-      {super.key,
-      required this.loginUseCase,
-      required this.getCategoriesUseCase});
+  const Login({
+    super.key,
+    required this.loginUseCase,
+    required this.getCategoriesUseCase,
+    required this.searchProductsUseCase, 
+  });
 
   @override
   State<Login> createState() => _LoginState();
@@ -44,6 +48,7 @@ class _LoginState extends State<Login> {
         MaterialPageRoute(
           builder: (context) => Categories(
             getCategoriesUseCase: widget.getCategoriesUseCase,
+            searchProductsUseCase: widget.searchProductsUseCase,
           ),
         ),
       );

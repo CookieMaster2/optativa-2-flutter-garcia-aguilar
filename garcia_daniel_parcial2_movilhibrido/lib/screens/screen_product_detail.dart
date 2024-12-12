@@ -40,6 +40,32 @@ class _DetailsState extends State<Details> {
     });
   }
 
+  Future<void> _addToHistory(ProductDetailDTO product) async {
+    final prefs = await SharedPreferences.getInstance();
+    final history = prefs.getStringList('user_history') ?? [];
+
+    final List<Map<String, dynamic>> parsedHistory =
+        history.map((e) => jsonDecode(e) as Map<String, dynamic>).toList();
+
+    final existingProductIndex = parsedHistory.indexWhere((p) => p['id'] == product.id);
+
+    if (existingProductIndex != -1) {
+      parsedHistory[existingProductIndex]['viewCount'] =
+          (parsedHistory[existingProductIndex]['viewCount'] ?? 0) + 1;
+    } else {
+      parsedHistory.add({
+        "id": product.id,
+        "title": product.title,
+        "price": product.price,
+        "imageUrl": product.thumbnail,
+        "viewCount": 1,
+      });
+    }
+
+    final updatedHistory = parsedHistory.map((e) => jsonEncode(e)).toList();
+    await prefs.setStringList('user_history', updatedHistory);
+  }
+
   @override
   Widget build(BuildContext context) {
     final repository = ProductDetailRepository(Connection());
@@ -58,16 +84,17 @@ class _DetailsState extends State<Details> {
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
             return Center(
-                child:
-                    Text("Error loading product details: ${snapshot.error}"));
+                child: Text("Error loading product details: ${snapshot.error}"));
           } else if (!snapshot.hasData) {
             return const Center(child: Text("No details found"));
           } else {
             final product = snapshot.data!;
+            // Add product to history
+            _addToHistory(product);
             return Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Center(
                     child: Image.network(
@@ -145,9 +172,42 @@ class _DetailsState extends State<Details> {
                         : null,
                     icon: const Icon(Icons.add),
                     label: const Text("Agregar"),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 32, vertical: 12),
+                  ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    "Reviews",
+                    style: TextStyle(
+                        fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: product.reviews.length,
+                      itemBuilder: (context, index) {
+                        final review = product.reviews[index];
+                        return Card(
+                          margin: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: ListTile(
+                            title: Text(
+                              review.reviewerName,
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  review.comment,
+                                  style: const TextStyle(fontSize: 16),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Rating: ${review.rating} - ${review.date.toLocal()}',
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ],
